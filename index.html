@@ -1291,7 +1291,7 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
 })();
 </script>
 
-<div style="position:fixed;right:6px;bottom:3px;z-index:999;color:#fff8;font:10px Arial;pointer-events:none">V16 Ultimate Remaster Pro 4</div>
+<div style="position:fixed;right:6px;bottom:3px;z-index:999;color:#fff8;font:10px Arial;pointer-events:none">V16 Ultimate Pro 6</div>
 <style>
 #carryBtn{background:linear-gradient(#d8b4fe,#a78bfa);font-size:22px}
 #teamHint{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:29;display:none;background:rgba(13,18,35,.82);color:#fff;border:2px solid #fff6;border-radius:12px;padding:6px 10px;font:bold 12px Arial;pointer-events:none}
@@ -1389,4 +1389,138 @@ body.coop-active #teamHint{display:block}
   ensureCarryButton();
 })();
 </script>
+
+<style>
+#animBadge{position:fixed;left:8px;top:8px;z-index:40;background:rgba(10,16,30,.72);color:#fff;border:1px solid #ffffff38;border-radius:10px;padding:6px 9px;font:700 11px Arial;pointer-events:none;backdrop-filter:blur(5px)}
+body:not(.coop-active) #teamHint{display:none!important}
+</style>
+<div id="animBadge">PRO 6 · NATÜRLICHE ANIMATIONEN</div>
+<script>
+(function(){
+'use strict';
+const TAU=Math.PI*2;
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function oval(q,x,y,rx,ry,fill,stroke){q.fillStyle=fill;q.beginPath();q.ellipse(x,y,rx,ry,0,0,TAU);q.fill();if(stroke){q.strokeStyle=stroke;q.stroke()}}
+function limb(q,x1,y1,x2,y2,x3,y3,col,w){q.strokeStyle=col;q.lineWidth=w;q.lineCap='round';q.lineJoin='round';q.beginPath();q.moveTo(x1,y1);q.lineTo(x2,y2);q.lineTo(x3,y3);q.stroke()}
+
+// Animation state machine layered onto the existing gameplay.
+const baseUpdP=window.updP;
+window.updP=function(p,dt){
+  const wasGround=!!p.g, oldVx=p.vx||0, oldVy=p.vy||0;
+  baseUpdP(p,dt);
+  p.animTime=(p.animTime||0)+dt;
+  p.speed01=clamp(Math.abs(p.vx)/(p.sp||300),0,1.35);
+  p.justLanded=!wasGround&&p.g&&oldVy>180;
+  if(p.justLanded){p.landTimer=.14;if(window.parts)for(let i=0;i<7;i++)parts.push({x:p.x+p.w/2,y:p.y+p.h,vx:(Math.random()-.5)*110,vy:-20-Math.random()*65,l:.35,c:'rgba(255,255,255,.7)'})}
+  p.landTimer=Math.max(0,(p.landTimer||0)-dt);
+  const reversing=p.g&&Math.abs(oldVx)>90&&Math.abs(p.vx)>10&&Math.sign(oldVx)!==Math.sign(p.vx);
+  if(reversing)p.skidTimer=.16;
+  p.skidTimer=Math.max(0,(p.skidTimer||0)-dt);
+  if(p.carried)p.animState='ride';
+  else if(p.pose==='carry')p.animState='carry';
+  else if(p.landTimer>0)p.animState='land';
+  else if(p.skidTimer>0)p.animState='skid';
+  else if(!p.g)p.animState=p.vy<40?'jump':'fall';
+  else if(p.speed01>.78)p.animState='run';
+  else if(p.speed01>.08)p.animState='walk';
+  else p.animState='idle';
+  p.pose=p.animState;
+};
+
+// High-detail articulated bear renderer with 8-phase locomotion.
+window.dog=function(q,x,y,k,s=1,f=1,pose='idle',fr=0){
+  const black=k==='chanel', t=(window.time||0), state=pose||'idle';
+  const moving=state==='walk'||state==='run', run=state==='run';
+  const rate=run?12:8, phase=t*rate+fr*.45;
+  const step=Math.sin(phase), step2=Math.sin(phase+Math.PI), lift=Math.max(0,Math.sin(phase));
+  const breathing=Math.sin(t*2.2+fr)*.9;
+  const airborne=state==='jump'||state==='fall'||state==='ride';
+  const landing=state==='land', skid=state==='skid', carry=state==='carry', ride=state==='ride';
+  const bob=moving?Math.abs(Math.sin(phase))*2.5:breathing*.45;
+  const lean=skid?-0.15:(run?.09:0);
+  const base=black?'#151920':'#ede4d2', light=black?'#38404d':'#fffaf0', dark=black?'#05070b':'#b7a78e';
+  const outline=black?'#020306':'#756957', muzzle=black?'#4b515c':'#dccdb4', inner=black?'#6d4f59':'#dfa7ad', collar=black?'#e1b72f':'#3b92ef';
+  q.save();q.translate(x,y+bob);if(f<0){q.translate(70*s,0);q.scale(-1,1)}q.rotate(lean);
+  // dynamic shadow contracts in air
+  q.save();q.globalAlpha=airborne?.18:.38;let sg=q.createRadialGradient(35*s,73*s,1,35*s,73*s,(airborne?20:31)*s);sg.addColorStop(0,'#000');sg.addColorStop(1,'rgba(0,0,0,0)');q.fillStyle=sg;q.beginPath();q.ellipse(35*s,73*s,(airborne?20:31)*s,(airborne?4:7)*s,0,0,TAU);q.fill();q.restore();
+  // tail, ears react to speed
+  q.strokeStyle=base;q.lineWidth=10*s;q.lineCap='round';q.beginPath();q.moveTo(13*s,45*s);q.quadraticCurveTo((-2+step*6)*s,(37-(run?3:0))*s,8*s,28*s);q.stroke();
+  // rear legs with knees and feet
+  let hipY=51, footY=landing?65:70-(airborne?8:0), amp=run?11:7;
+  const lFootX=20-step*amp, rFootX=49-step2*amp;
+  limb(q,24*s,hipY*s,(22-step*4)*s,60*s,lFootX*s,footY*s,dark,11*s);
+  limb(q,46*s,hipY*s,(47-step2*4)*s,60*s,rFootX*s,footY*s,dark,11*s);
+  oval(q,lFootX*s,footY*s,7*s,4.5*s,dark);oval(q,rFootX*s,footY*s,7*s,4.5*s,dark);
+  // body volume
+  let bg=q.createRadialGradient(25*s,31*s,2,36*s,47*s,34*s);bg.addColorStop(0,light);bg.addColorStop(.43,base);bg.addColorStop(1,dark);q.fillStyle=bg;q.strokeStyle=outline;q.lineWidth=2*s;q.beginPath();q.moveTo(20*s,29*s);q.bezierCurveTo(8*s,36*s,8*s,59*s,25*s,67*s);q.bezierCurveTo(39*s,74*s,59*s,65*s,60*s,47*s);q.bezierCurveTo(61*s,34*s,52*s,27*s,42*s,26*s);q.closePath();q.fill();q.stroke();
+  q.fillStyle=black?'rgba(255,255,255,.09)':'rgba(255,255,255,.58)';q.beginPath();q.ellipse(35*s,(49+breathing*.25)*s,13*s,16*s,0,0,TAU);q.fill();
+  // ears
+  const earTilt=moving?step*.06:Math.sin(t*1.7)*.025;
+  q.save();q.translate(19*s,12*s);q.rotate(-earTilt);oval(q,0,0,11*s,11*s,base,outline);oval(q,0,0,5.5*s,5.5*s,inner);q.restore();
+  q.save();q.translate(50*s,12*s);q.rotate(earTilt);oval(q,0,0,11*s,11*s,base,outline);oval(q,0,0,5.5*s,5.5*s,inner);q.restore();
+  // head follows locomotion slightly
+  q.save();q.translate((run?step*.8:0)*s,(landing?3:0)*s);
+  let hg=q.createRadialGradient(26*s,12*s,2,35*s,24*s,29*s);hg.addColorStop(0,light);hg.addColorStop(.48,base);hg.addColorStop(1,dark);q.fillStyle=hg;q.beginPath();q.moveTo(13*s,23*s);q.bezierCurveTo(13*s,5*s,55*s,3*s,58*s,22*s);q.bezierCurveTo(61*s,39*s,49*s,45*s,35*s,44*s);q.bezierCurveTo(20*s,45*s,10*s,38*s,13*s,23*s);q.closePath();q.fill();q.stroke();
+  oval(q,43*s,31*s,15*s,11*s,muzzle,outline);oval(q,49*s,27*s,5.4*s,4.1*s,'#111');
+  const blink=Math.sin(t*.74+fr*1.17)>.976;
+  if(blink){q.strokeStyle='#171717';q.lineWidth=2.2*s;q.beginPath();q.moveTo(22*s,21*s);q.lineTo(31*s,21*s);q.moveTo(39*s,21*s);q.lineTo(48*s,21*s);q.stroke()}else{
+    oval(q,27*s,20*s,5*s,6.3*s,'#fff');oval(q,43*s,20*s,5*s,6.3*s,'#fff');let look=moving?step*1.2:0;oval(q,(28+look)*s,21*s,2.8*s,2.8*s,'#5a3b20');oval(q,(44+look)*s,21*s,2.8*s,2.8*s,'#5a3b20');oval(q,(28.5+look)*s,21.5*s,1.4*s,1.4*s,'#111');oval(q,(44.5+look)*s,21.5*s,1.4*s,1.4*s,'#111');
+  }
+  q.strokeStyle=black?'#ddd':'#4e4438';q.lineWidth=1.7*s;q.beginPath();q.moveTo(48*s,31*s);q.quadraticCurveTo(45*s,36*s,41*s,34*s);q.moveTo(48*s,31*s);q.quadraticCurveTo(50*s,36*s,53*s,33*s);q.stroke();q.restore();
+  // front arms / contextual poses
+  q.strokeStyle=base;q.lineWidth=11*s;q.lineCap='round';q.beginPath();
+  if(carry){q.moveTo(17*s,39*s);q.lineTo(9*s,26*s);q.moveTo(53*s,39*s);q.lineTo(61*s,26*s)}
+  else if(ride){q.moveTo(17*s,39*s);q.lineTo(8*s,45*s);q.moveTo(53*s,39*s);q.lineTo(62*s,45*s)}
+  else if(airborne){q.moveTo(17*s,39*s);q.lineTo(8*s,34*s);q.moveTo(53*s,39*s);q.lineTo(62*s,34*s)}
+  else{q.moveTo(17*s,39*s);q.lineTo((11+step2*8)*s,(55+lift)*s);q.moveTo(53*s,39*s);q.lineTo((59+step*8)*s,(55+Math.max(0,-step))*s)}q.stroke();
+  // collar/tag
+  let cg=q.createLinearGradient(13*s,46*s,57*s,55*s);cg.addColorStop(0,collar);cg.addColorStop(.5,'#fff3b2');cg.addColorStop(1,collar);q.fillStyle=cg;q.strokeStyle='rgba(0,0,0,.35)';q.lineWidth=1.3*s;rr(q,13*s,46*s,44*s,8*s,4*s);q.fill();q.stroke();oval(q,35*s,57*s,5*s,5*s,'#f6cf4f','rgba(0,0,0,.35)');q.fillStyle='#202020';q.font=`bold ${6*s}px Arial`;q.textAlign='center';q.fillText(black?'C':'A',35*s,59*s);
+  q.restore();
+};
+
+// Unified animated enemy renderer. Every enemy has a characteristic gait.
+window.drawEnemy3D=function(e,ox){
+  const x=e.x-ox,y=e.y,w=e.w,h=e.h,t=(window.time||0)+(e.x||0)*.003;
+  const gait=Math.sin(t*(e.t==='mouse'?15:e.t==='rabbit'?9:7));
+  const hop=e.t==='rabbit'?Math.max(0,Math.sin(t*7))*7:0;
+  const fly=(e.t==='owl'||e.t==='bat')?Math.sin(t*6)*7:0;
+  const bob=hop+fly+Math.abs(gait)*(e.t==='boar'?1:2);
+  const palette={rabbit:['#f4efe8','#9b8e7f'],mouse:['#cbd2da','#68717f'],cat:['#f2a65a','#7a3415'],fox:['#ef8d35','#8e350e'],wolf:['#aeb8c5','#46515f'],raccoon:['#b9bec5','#4d535d'],lion:['#efbd55','#9d5510'],boar:['#955526','#40210e'],hedgehog:['#b87526','#48270f'],owl:['#d8b36c','#654625'],bat:['#9168c7','#351b50']};
+  const col=palette[e.t]||['#8b5cf6','#302044'];
+  c.save();c.translate(0,-bob);c.shadowColor='rgba(0,0,0,.3)';c.shadowBlur=9;c.shadowOffsetY=5;
+  // legs / wings behind body
+  if(e.t==='owl'||e.t==='bat'){
+    c.fillStyle=col[1];const wing=Math.sin(t*10)*10;c.beginPath();c.moveTo(x+10,y+h*.45);c.lineTo(x-16,y+h*.45+wing);c.lineTo(x+10,y+h*.75);c.moveTo(x+w-10,y+h*.45);c.lineTo(x+w+16,y+h*.45-wing);c.lineTo(x+w-10,y+h*.75);c.fill();
+  }else{
+    c.strokeStyle=col[1];c.lineWidth=6;c.lineCap='round';c.beginPath();c.moveTo(x+w*.3,y+h-3);c.lineTo(x+w*.3-gait*5,y+h+5);c.moveTo(x+w*.7,y+h-3);c.lineTo(x+w*.7+gait*5,y+h+5);c.stroke();
+  }
+  // species silhouette
+  let g=c.createRadialGradient(x+w*.35,y+h*.25,2,x+w*.5,y+h*.55,w*.55);g.addColorStop(0,'#fff8');g.addColorStop(.35,col[0]);g.addColorStop(1,col[1]);c.fillStyle=g;c.strokeStyle=col[1];c.lineWidth=2;
+  c.beginPath();c.ellipse(x+w*.5,y+h*.58,w*.45,h*.36,0,0,TAU);c.fill();c.stroke();
+  if(['cat','fox','wolf','raccoon'].includes(e.t)){c.beginPath();c.moveTo(x+7,y+18);c.lineTo(x+15,y-4);c.lineTo(x+24,y+17);c.moveTo(x+w-7,y+18);c.lineTo(x+w-15,y-4);c.lineTo(x+w-24,y+17);c.fill();c.stroke()}
+  if(e.t==='rabbit'){c.beginPath();c.ellipse(x+w*.32,y+2,7,18,-.15,0,TAU);c.ellipse(x+w*.68,y+2,7,18,.15,0,TAU);c.fill();c.stroke()}
+  if(e.t==='mouse'){c.fillStyle='#d99dab';c.beginPath();c.arc(x+w*.3,y+h*.2,7,0,TAU);c.arc(x+w*.7,y+h*.2,7,0,TAU);c.fill()}
+  if(e.t==='hedgehog'){c.fillStyle=col[1];for(let i=0;i<7;i++){c.beginPath();c.moveTo(x+4+i*6,y+20);c.lineTo(x+9+i*6,y-8-(i%2)*5);c.lineTo(x+15+i*6,y+20);c.fill()}}
+  if(e.t==='boar'){c.fillStyle='#f4dfb5';c.beginPath();c.moveTo(x+w-10,y+25);c.lineTo(x+w+5,y+18);c.lineTo(x+w-4,y+32);c.fill()}
+  if(e.t==='raccoon'){c.fillStyle='rgba(20,24,30,.72)';c.beginPath();c.ellipse(x+w*.5,y+h*.38,20,8,0,0,TAU);c.fill()}
+  // face reacts to player distance
+  const target=window.P&&P[0], alert=target&&Math.abs(target.x-e.x)<170;
+  c.fillStyle='#fff';c.beginPath();c.ellipse(x+w*.38,y+h*.40,5,alert?6:5,0,0,TAU);c.ellipse(x+w*.64,y+h*.40,5,alert?6:5,0,0,TAU);c.fill();c.fillStyle='#111';c.beginPath();c.arc(x+w*.40,y+h*.42,2.2,0,TAU);c.arc(x+w*.66,y+h*.42,2.2,0,TAU);c.fill();
+  if(alert){c.strokeStyle='#3b2418';c.lineWidth=2;c.beginPath();c.moveTo(x+w*.35,y+h*.25);c.lineTo(x+w*.46,y+h*.29);c.moveTo(x+w*.69,y+h*.25);c.lineTo(x+w*.58,y+h*.29);c.stroke()}
+  c.shadowColor='transparent';c.fillStyle='#111827';c.fillRect(x,y-9,w,5);c.fillStyle='#22c55e';c.fillRect(x,y-9,w*Math.max(0,(e.hp||1)/3),5);c.restore();
+};
+
+// animated environment details for a more modern platformer feel
+const baseWorldLife=window.drawWorldLife;
+window.drawWorldLife=function(ox){
+  baseWorldLife(ox);
+  for(let i=0;i<28;i++){
+    const xx=i*145-(ox*.65%145), yy=H-98;
+    c.strokeStyle='rgba(35,130,65,.75)';c.lineWidth=2;c.beginPath();
+    for(let b=0;b<5;b++){let sway=Math.sin((window.time||0)*2+i+b)*4;c.moveTo(xx+b*5,yy);c.quadraticCurveTo(xx+b*5+sway,yy-10,xx+b*5+sway*.5,yy-19-b%2*4)}c.stroke();
+  }
+};
+})();
+</script>
+
 </body></html>
