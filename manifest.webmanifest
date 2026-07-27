@@ -1,8 +1,8 @@
 {
-  "name": "Chanel & Armani – Bonus und Boss V16",
+  "name": "Chanel & Armani – Pro 18 Galaxy-Bonus",
   "short_name": "Chanel & Armani",
-  "description": "Neu gebaute Bonusspiele und Bosskampf mit eigener, zuverlässig sichtbarer Touch-Steuerung.",
-  "start_url": "./index.html?source=pwa",
+  "description": "Vollständiges Abenteuer mit Palmenschwingen und freischaltbarem Weltraum-Bonus ab 1000 Punkten.",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "landscape",
