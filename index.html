@@ -1,4 +1,4 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Chanel & Armani – Pro 18 Galaxy Bonus</title>
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Chanel & Armani – Pro 20 Galaxy Hochformat</title>
 <style>
 *{box-sizing:border-box;-webkit-user-select:none;user-select:none}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#08101d;font-family:Arial}canvas{display:block}#game{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
 .screen{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;padding:8px;background:linear-gradient(#61c5ffed,#6bd06bed)}.screen.show{display:flex}.card{width:min(96vw,920px);max-height:94vh;overflow:auto;background:#f4ead7;border:5px solid #362b23;border-radius:22px;padding:14px;text-align:center;box-shadow:0 18px 55px #0008}h1{margin:0;font-size:clamp(30px,6vw,62px);text-shadow:3px 3px #fff}h2,h3{margin:5px}.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:8px}button,input{font:inherit}button{border:4px solid #362b23;border-radius:14px;padding:10px 14px;font-weight:900;font-size:16px;background:#f3c34e;box-shadow:0 5px #8b6515}.char{min-width:145px;background:#eee6da}.char.selected{outline:6px solid #22c55e}.preview{width:100px;height:78px;border:3px solid #362b23;border-radius:10px;background:#9bdcff}.sticky{position:sticky;bottom:0;width:min(320px,90%)}
@@ -296,7 +296,14 @@ font:700 14px Arial;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.35)">
     <div class="v16Header" style="position:absolute;z-index:4;top:max(6px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:rgba(2,6,23,.78);border-radius:12px;padding:5px 10px;white-space:nowrap">
       <b>GALAXY-BONUS</b> · <span id="galaxyPilot">ARMANI</span> · ⭐ <span id="galaxyScore">0</span> · ❤ <span id="galaxyLives">3</span>
     </div>
-    <canvas id="galaxyCanvas" class="bonusCanvas v16Canvas" width="960" height="540" style="width:100vw;height:100vh;max-height:none;border:0;border-radius:0;touch-action:none"></canvas>
+    <canvas id="galaxyCanvas" class="bonusCanvas v16Canvas" width="540" height="960" style="width:100vw;height:100dvh;max-height:none;border:0;border-radius:0;touch-action:none"></canvas>
+    <div id="galaxyRotate" role="dialog" aria-live="assertive" style="display:none;position:absolute;inset:0;z-index:30;background:radial-gradient(circle at 50% 35%,#172554,#020617 68%);color:#fff;align-items:center;justify-content:center;text-align:center;padding:28px">
+      <div style="max-width:360px;background:rgba(15,23,42,.9);border:2px solid rgba(255,255,255,.25);border-radius:24px;padding:26px 22px;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+        <div style="font-size:62px;line-height:1">📱↻</div>
+        <h2 style="margin:12px 0 8px">HANDY HOCHKANT DREHEN</h2>
+        <p style="margin:0;line-height:1.45">Das Weltraum-Bonusspiel läuft ausschließlich im Hochformat. Drehe dein Handy bitte hochkant.</p>
+      </div>
+    </div>
     <div id="galControls" style="position:absolute;z-index:7;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none">
       <div style="display:grid;grid-template-columns:58px 58px 58px;grid-template-rows:52px 52px;gap:6px;pointer-events:auto">
         <span></span><button id="galUp" aria-label="Oben">▲</button><span></span>
@@ -1729,6 +1736,9 @@ let ship=null,bullets=[],aliens=[],stars=[],enemyBullets=[];
 const animalTypes=['rabbit','cat','fox','hedgehog','raccoon','wolf','owl','boar','mouse','bat','shadow','bear'];
 const G={left:false,right:false,up:false,down:false,fire:false};
 function gc(){return document.getElementById('galaxyCanvas')}
+function galaxyIsPortrait(){return innerHeight>=innerWidth}
+function sizeGalaxyCanvas(){const q=gc();if(!q)return;const cssW=Math.max(320,innerWidth),cssH=Math.max(480,innerHeight);q.style.width=cssW+'px';q.style.height=cssH+'px';q.width=cssW;q.height=cssH}
+function showGalaxyRotate(showIt){const o=document.getElementById('galaxyRotate');if(o)o.style.display=showIt?'flex':'none';document.getElementById('galControls').style.visibility=showIt?'hidden':'visible'}
 function resetGalaxy(){
  const q=gc();ship={x:q.width/2-28,y:q.height-86,w:56,h:58,cd:0,inv:0};bullets=[];aliens=[];enemyBullets=[];gScore=0;gLives=3;gWave=1;gSpawn=0;gBoss=null;
  stars=Array.from({length:95},()=>({x:Math.random()*q.width,y:Math.random()*q.height,s:1+Math.random()*2,v:25+Math.random()*75}));
@@ -1741,10 +1751,12 @@ function spawnAlien(){
 }
 function startGalaxy(){
  if(score<1000){toast('Weltraum-Bonus erst ab 1000 Punkten');return}
- cancelAnimationFrame(gRAF);resetGalaxy();gRun=true;gLast=performance.now();state='galaxy';document.body.classList.add('bonus');useMainGameControls(false);show('galaxy');gRAF=requestAnimationFrame(loop);
+ cancelAnimationFrame(gRAF);state='galaxy';document.body.classList.add('bonus');useMainGameControls(false);show('galaxy');sizeGalaxyCanvas();resetGalaxy();
+ if(!galaxyIsPortrait()){gRun=false;showGalaxyRotate(true);return}
+ showGalaxyRotate(false);gRun=true;gLast=performance.now();gRAF=requestAnimationFrame(loop);
 }
 function stopGalaxy(){
- gRun=false;cancelAnimationFrame(gRAF);document.body.classList.remove('bonus');score+=gScore;state='win';
+ gRun=false;cancelAnimationFrame(gRAF);showGalaxyRotate(false);document.body.classList.remove('bonus');score+=gScore;state='win';
  const eligible=true;$('galaxyStatus').textContent='🚀 Weltraum-Bonus beendet: +'+gScore+' Punkte · Gesamt '+score+'.';$('galaxyStart').style.display='inline-block';show('win');
 }
 function fire(){if(!ship||ship.cd>0)return;bullets.push({x:ship.x+ship.w/2-3,y:ship.y-10,w:6,h:18,vy:-560});ship.cd=.16;if(typeof tone==='function')tone(680,.05,'square',.045)}
@@ -1783,6 +1795,18 @@ function draw(){
 }
 function loop(now){if(!gRun)return;const dt=Math.min(.033,(now-gLast)/1000||.016);gLast=now;update(dt);draw();gRAF=requestAnimationFrame(loop)}
 function bindHold(id,key){const e=document.getElementById(id);if(!e)return;['pointerdown','touchstart'].forEach(n=>e.addEventListener(n,v=>{v.preventDefault();G[key]=true},{passive:false}));['pointerup','pointercancel','touchend','touchcancel'].forEach(n=>e.addEventListener(n,v=>{v.preventDefault();G[key]=false},{passive:false}))}
+function handleGalaxyOrientation(){
+ if(state!=='galaxy')return;
+ const portrait=galaxyIsPortrait();
+ showGalaxyRotate(!portrait);
+ cancelAnimationFrame(gRAF);
+ if(!portrait){gRun=false;G.left=G.right=G.up=G.down=G.fire=false;return}
+ sizeGalaxyCanvas();
+ if(!ship){resetGalaxy()}else{const q=gc();ship.x=Math.max(8,Math.min(q.width-ship.w-8,ship.x));ship.y=Math.max(48,Math.min(q.height-ship.h-8,ship.y))}
+ gRun=true;gLast=performance.now();gRAF=requestAnimationFrame(loop);
+}
+addEventListener('resize',()=>setTimeout(handleGalaxyOrientation,120));
+addEventListener('orientationchange',()=>setTimeout(handleGalaxyOrientation,250));
 addEventListener('keydown',e=>{if(state!=='galaxy')return;if(e.key==='ArrowLeft'||e.key==='a')G.left=true;if(e.key==='ArrowRight'||e.key==='d')G.right=true;if(e.key==='ArrowUp'||e.key==='w')G.up=true;if(e.key==='ArrowDown'||e.key==='s')G.down=true;if(e.key===' '||e.key==='Enter'||e.key==='f')G.fire=true});
 addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='a')G.left=false;if(e.key==='ArrowRight'||e.key==='d')G.right=false;if(e.key==='ArrowUp'||e.key==='w')G.up=false;if(e.key==='ArrowDown'||e.key==='s')G.down=false;if(e.key===' '||e.key==='Enter'||e.key==='f')G.fire=false});
 document.getElementById('galaxyStart').addEventListener('click',startGalaxy);document.getElementById('galaxyExit').addEventListener('click',stopGalaxy);bindHold('galLeft','left');bindHold('galRight','right');bindHold('galUp','up');bindHold('galDown','down');bindHold('galFire','fire');
@@ -1793,6 +1817,11 @@ document.getElementById('galaxyStart').addEventListener('click',startGalaxy);doc
 <style>
 #swingBtn{background:linear-gradient(180deg,#60a5fa,#1d4ed8);box-shadow:0 5px 0 #1e3a8a,0 8px 18px rgba(30,64,175,.35)}
 #swingHint{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:44;background:rgba(8,15,30,.82);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:8px 12px;font:800 12px Arial;pointer-events:none;display:none;backdrop-filter:blur(6px)}
+
+#galaxy .v16Stage{width:100vw;height:100dvh;max-width:none;max-height:none;overflow:hidden}
+#galaxyCanvas{display:block;position:absolute;inset:0}
+@media (orientation:portrait){#galaxy{background:#020617}#galaxyExit{top:max(44px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));bottom:auto}}
+@media (orientation:landscape){#galaxyRotate{display:flex!important}#galControls,#galaxyCanvas,#galaxy .v16Header,#galaxyExit{visibility:hidden!important}}
 </style>
 <div id="swingHint">🌴 In Palmennähe: 🕸️ drücken · ◀ ▶ schwingen · ⬆ loslassen</div>
 <script>
